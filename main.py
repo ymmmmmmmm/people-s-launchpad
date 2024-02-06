@@ -274,7 +274,7 @@ def run(twitter_token, discord_token, invite_code):
             logger.success(response)
             with open('success.txt', 'a+') as f:
                 f.writelines(
-                    f'{invite_code}----{twitter_token}----{discord_token}----{account.address}----{account.key.hex()}')
+                    f'{invite_code}----{twitter_token}----{discord_token}----{account.address}----{account.key.hex()}\n')
         else:
             logger.warning(response)
         return
