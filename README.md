@@ -1,6 +1,6 @@
 # people-s-launchpad
 
-people-s-launchpad 邀请注册
+people-s-launchpad  Merlin L2   邀请注册
 
 便宜Twitter令牌号：[hdd.cm](https://hdd.cm/)  单价低至0.2元
 
