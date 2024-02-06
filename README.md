@@ -2,6 +2,8 @@
 
 people-s-launchpad 邀请注册
 
+便宜Twitter令牌号：[hdd.cm](https://hdd.cm/)  单价低至0.2元
+
 ### README
 
 在开始使用之前，请确保安装了所有必要的依赖。
