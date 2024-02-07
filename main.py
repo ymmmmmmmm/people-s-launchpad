@@ -70,76 +70,82 @@ def build_trackers(user_agent) -> str:
 
 
 def authorize_twitter(twitter_token, proxies=None):
-    session = requests.session()
-    session.proxies = proxies
-    response = session.get(url='https://twitter.com/home', cookies={
-        'auth_token': twitter_token,
-        'ct0': '960eb16898ea5b715b54e54a8f58c172'
-    })
-    ct0 = re.findall('ct0=(.*?);', dict(response.headers)['set-cookie'])[0]
-    cookies = {'ct0': ct0, 'auth_token': twitter_token}
-    params = {
-        'response_type': 'code',
-        'client_id': 'TjkxNDIzc1ZscF9mSjU4Y3M0bkg6MTpjaQ',
-        'redirect_uri': 'https://launchpad.ally.build/signup',
-        'scope': 'tweet.read users.read',
-        'state': f'twitter-{uuid.uuid4()}',
-        'code_challenge': 'challenge',
-        'code_challenge_method': 'plain',
-    }
+    try:
+        session = requests.session()
+        session.proxies = proxies
+        response = session.get(url='https://twitter.com/home', cookies={
+            'auth_token': twitter_token,
+            'ct0': '960eb16898ea5b715b54e54a8f58c172'
+        })
+        ct0 = re.findall('ct0=(.*?);', dict(response.headers)['set-cookie'])[0]
+        cookies = {'ct0': ct0, 'auth_token': twitter_token}
+        params = {
+            'response_type': 'code',
+            'client_id': 'TjkxNDIzc1ZscF9mSjU4Y3M0bkg6MTpjaQ',
+            'redirect_uri': 'https://launchpad.ally.build/signup',
+            'scope': 'tweet.read users.read',
+            'state': f'twitter-{uuid.uuid4()}',
+            'code_challenge': 'challenge',
+            'code_challenge_method': 'plain',
+        }
 
-    headers = {'authority': 'twitter.com', 'accept': '*/*', 'accept-language': 'zh-CN,zh;q=0.9',
-               'authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
-               'cache-control': 'no-cache', 'content-type': 'application/json', 'origin': 'https://twitter.com',
-               'pragma': 'no-cache', 'referer': 'https://twitter.com/puffer_finance/status/1751954283052810298',
-               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-               'x-csrf-token': ct0}
+        headers = {'authority': 'twitter.com', 'accept': '*/*', 'accept-language': 'zh-CN,zh;q=0.9',
+                   'authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
+                   'cache-control': 'no-cache', 'content-type': 'application/json', 'origin': 'https://twitter.com',
+                   'pragma': 'no-cache', 'referer': 'https://twitter.com/puffer_finance/status/1751954283052810298',
+                   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                   'x-csrf-token': ct0}
 
-    response = session.get('https://twitter.com/i/api/2/oauth2/authorize', params=params, cookies=cookies,
-                           headers=headers).json()
-    auth_code = response['auth_code']
-    data = {'approval': True, 'code': auth_code}
-    response = session.post('https://twitter.com/i/api/2/oauth2/authorize', json=data, cookies=cookies,
-                            headers=headers).json()
-    redirect_uri = response['redirect_uri']
-    return redirect_uri
+        response = session.get('https://twitter.com/i/api/2/oauth2/authorize', params=params, cookies=cookies,
+                               headers=headers).json()
+        auth_code = response['auth_code']
+        data = {'approval': True, 'code': auth_code}
+        response = session.post('https://twitter.com/i/api/2/oauth2/authorize', json=data, cookies=cookies,
+                                headers=headers).json()
+        redirect_uri = response['redirect_uri']
+        return redirect_uri
+    except Exception as e:
+        logger.error(e)
 
 
 def authorize_discord(discord_token, proxies=None):
-    session = tls_client.Session(
-        random_tls_extension_order=True
-    )
-    session.proxies = proxies
-    user_agent = fake.safari()
-    headers = {
-        'Host': 'discord.com',
-        'Connection': 'keep-alive',
-        'User-Agent': user_agent,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-    }
-    _uuid = uuid.uuid4()
-    response = session.get(
-        url=f'https://discord.com/api/oauth2/authorize?client_id=1189751301643456613&redirect_uri=https%3A%2F%2Flaunchpad.ally.build%2Fsignup&response_type=code&scope=identify%20email&state=discord-{_uuid}',
-        headers=headers, allow_redirects=False)
-    logger.debug(response)
-    x_super_properties = build_trackers(user_agent)
-    headers.update({"Authorization": discord_token})
-    headers.update({"X-Super-Properties": x_super_properties})
-    headers.update({"X-Debug-Options": 'bugReporterEnabled'})
-    response = session.get(
-        url=f'https://discord.com/oauth2/authorize?client_id=1189751301643456613&redirect_uri=https%3A%2F%2Flaunchpad.ally.build%2Fsignup&response_type=code&scope=identify%20email&state=discord-{_uuid}',
-        headers=headers, allow_redirects=False)
-    logger.debug(response.status_code)
-    data = {"permissions": "0", "authorize": True, "integration_type": 0}
-    response = session.post(
-        url=f'https://discord.com/api/v9/oauth2/authorize?client_id=1189751301643456613&response_type=code&redirect_uri=https%3A%2F%2Flaunchpad.ally.build%2Fsignup&scope=identify%20email&state=discord-{_uuid}',
-        headers=headers, allow_redirects=False, json=data).json()
-    logger.debug(response)
-    location = response['location']
-    code = re.findall('code=(.*?)&state=', location)[0]
-    return code
+    try:
+        session = tls_client.Session(
+            random_tls_extension_order=True
+        )
+        session.proxies = proxies
+        user_agent = fake.safari()
+        headers = {
+            'Host': 'discord.com',
+            'Connection': 'keep-alive',
+            'User-Agent': user_agent,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+        }
+        _uuid = uuid.uuid4()
+        response = session.get(
+            url=f'https://discord.com/api/oauth2/authorize?client_id=1189751301643456613&redirect_uri=https%3A%2F%2Flaunchpad.ally.build%2Fsignup&response_type=code&scope=identify%20email&state=discord-{_uuid}',
+            headers=headers, allow_redirects=False)
+        logger.debug(response)
+        x_super_properties = build_trackers(user_agent)
+        headers.update({"Authorization": discord_token})
+        headers.update({"X-Super-Properties": x_super_properties})
+        headers.update({"X-Debug-Options": 'bugReporterEnabled'})
+        response = session.get(
+            url=f'https://discord.com/oauth2/authorize?client_id=1189751301643456613&redirect_uri=https%3A%2F%2Flaunchpad.ally.build%2Fsignup&response_type=code&scope=identify%20email&state=discord-{_uuid}',
+            headers=headers, allow_redirects=False)
+        logger.debug(response.status_code)
+        data = {"permissions": "0", "authorize": True, "integration_type": 0}
+        response = session.post(
+            url=f'https://discord.com/api/v9/oauth2/authorize?client_id=1189751301643456613&response_type=code&redirect_uri=https%3A%2F%2Flaunchpad.ally.build%2Fsignup&scope=identify%20email&state=discord-{_uuid}',
+            headers=headers, allow_redirects=False, json=data).json()
+        logger.debug(response)
+        location = response['location']
+        code = re.findall('code=(.*?)&state=', location)[0]
+        return code
+    except Exception as e:
+        logger.error(e)
 
 
 def run(twitter_token, discord_token, invite_code):
