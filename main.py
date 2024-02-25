@@ -273,7 +273,7 @@ def run(twitter_token, discord_token, invite_code):
         mac = sha256(dict(sorted(params.items())))
         params.update({'mac': mac})
         json_data = {'code': invite_code}
-        response = session.post('https://launchpad-api.particle.network/launchpads/1/user', params=params,
+        response = session.post('https://launchpad-api.particle.network/launchpads/2/user', params=params,
                                 headers=headers,
                                 json=json_data).json()
         if response.get('invitationCode', None):
